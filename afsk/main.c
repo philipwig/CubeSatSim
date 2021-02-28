@@ -169,17 +169,22 @@ int main(int argc, char * argv[]) {
   frameCnt = 1;
 
   if (argc > 1) {
+
+    // Sets the transmit modulation type
     //	  strcpy(src_addr, argv[1]);
     if ( * argv[1] == 'b') {
       mode = BPSK;
       printf("Mode BPSK\n");
-    } else if ( * argv[1] == 'a') {
+    } 
+    else if ( * argv[1] == 'a') {
       mode = AFSK;
       printf("Mode AFSK\n");
-    } else if ( * argv[1] == 'c') {
+    } 
+    else if ( * argv[1] == 'c') {
       mode = CW;
       printf("Mode CW\n");
-    } else {
+    } 
+    else {
       printf("Mode FSK\n");
     }
 
@@ -200,6 +205,8 @@ int main(int argc, char * argv[]) {
 
   // Open configuration file with callsign and reset count	
   FILE * config_file = fopen("/home/pi/CubeSatSim/sim.cfg", "r");
+
+  // If there is no config file, create a blank one and open it
   if (config_file == NULL) {
     printf("Creating config file.");
     config_file = fopen("/home/pi/CubeSatSim/sim.cfg", "w");
@@ -208,6 +215,7 @@ int main(int argc, char * argv[]) {
     config_file = fopen("/home/pi/CubeSatSim/sim.cfg", "r");
   }
 
+  // Read in the callsign, reset count, latitude and longitude from the config file
 //  char * cfg_buf[100];
   fscanf(config_file, "%s %d %f %f", call, & reset_count, & lat_file, & long_file);
   fclose(config_file);
@@ -219,6 +227,8 @@ int main(int argc, char * argv[]) {
     latitude = lat_file;
     longitude = long_file;
   }
+
+  // Setup the wiringpi library
   wiringPiSetup();
 
   // Check for SPI and AX-5043 Digital Transceiver Board	
@@ -256,9 +266,13 @@ int main(int argc, char * argv[]) {
   //	  printf("SPI not enabled!\n");
   //       }
   pclose(file);
+
+
   txLed = 0; // defaults for vB3 board without TFB
   txLedOn = LOW;
   txLedOff = HIGH;
+
+  // If ax5043 board is present, check for cubesat version (vB3, vB4, vB5, and current). Changes some pin assignments
   if (!ax5043) {
     pinMode(2, INPUT);
     pullUpDnControl(2, PUD_UP);
@@ -305,28 +319,37 @@ int main(int argc, char * argv[]) {
       }
     }
   }
+
+  // Set txLed to the correct pin
   pinMode(txLed, OUTPUT);
   digitalWrite(txLed, txLedOff);
+
   #ifdef DEBUG_LOGGING
   printf("Tx LED Off\n");
   #endif
+
+  // Set power led to the correct pin
   pinMode(onLed, OUTPUT);
   digitalWrite(onLed, onLedOn);
+
   #ifdef DEBUG_LOGGING
   printf("Power LED On\n");
   #endif
 
+  // Writes callsign, reset count, latitude and longitude to the sim.cfg file
   config_file = fopen("sim.cfg", "w");
   fprintf(config_file, "%s %d %8.4f %8.4f", call, reset_count, lat_file, long_file);
   //    fprintf(config_file, "%s %d", call, reset_count);
   fclose(config_file);
   config_file = fopen("sim.cfg", "r");
 
+  // Changes map values and tests i2c buses
   if (vB4) {
     map[BAT] = BUS;
     map[BUS] = BAT;
     snprintf(busStr, 10, "%d %d", test_i2c_bus(1), test_i2c_bus(0));
-  } else if (vB5) {
+  } 
+  else if (vB5) {
     map[MINUS_X] = MINUS_Y;
     map[PLUS_Z] = MINUS_X;	
     map[MINUS_Y] = PLUS_Z;		  
@@ -334,10 +357,12 @@ int main(int argc, char * argv[]) {
     if (access("/dev/i2c-11", W_OK | R_OK) >= 0) { // Test if I2C Bus 11 is present			
       printf("/dev/i2c-11 is present\n\n");
       snprintf(busStr, 10, "%d %d", test_i2c_bus(1), test_i2c_bus(11));
-    } else {
+    } 
+    else {
       snprintf(busStr, 10, "%d %d", test_i2c_bus(1), test_i2c_bus(3));
     }
-  } else {
+  } 
+  else {
     map[BUS] = MINUS_Z;
     map[BAT] = BUS;
     map[PLUS_Z] = BAT;
@@ -358,8 +383,7 @@ int main(int argc, char * argv[]) {
   //   printf("pythonStr result: %s\n", cmdbuffer);
   pclose(file1);
 
-  // try connecting to Arduino payload using UART
-
+  // Try connecting to Arduino payload using UART
   if (!ax5043 && !vB3) // don't test if AX5043 is present
   {
     payload = OFF;
@@ -500,14 +524,14 @@ int main(int argc, char * argv[]) {
     other_max[i] = -1000.0;
   }
 
+  // Main loop
   while (loop-- != 0) {
     frames_sent++;
 
     #ifdef DEBUG_LOGGING
     fprintf(stderr, "INFO: Battery voltage: %f V  Battery Threshold %f V\n", batteryVoltage, batteryThreshold);
     #endif
-    if ((batteryVoltage > 1.0) && (batteryVoltage < batteryThreshold)) // no battery INA219 will give 0V, no battery plugged into INA219 will read < 1V
-    {
+    if ((batteryVoltage > 1.0) && (batteryVoltage < batteryThreshold)) { // no battery INA219 will give 0V, no battery plugged into INA219 will read < 1V
       fprintf(stderr, "Battery voltage too low: %f V - shutting down!\n", batteryVoltage);
       digitalWrite(txLed, txLedOff);
       digitalWrite(onLed, onLedOff);
@@ -543,7 +567,8 @@ int main(int argc, char * argv[]) {
 
       printf("\n FSK Mode, %d bits per frame, %d bits per second, %d ms sample period\n",
         bufLen / (samples * frameCnt), bitRate, samplePeriod);
-    } else if (mode == BPSK) {
+    } 
+    else if (mode == BPSK) {
       bitRate = 1200;
       rsFrames = 3;
       payloads = 6;
@@ -573,10 +598,11 @@ int main(int argc, char * argv[]) {
     fprintf(stderr, "INFO: Getting TLM Data\n");
     #endif
 
+    // Gets the telemetry data
     if ((mode == AFSK) || (mode == CW)) {
       get_tlm();
-    } else // FSK or BPSK
-    {
+    } 
+    else { // FSK or BPSK
       get_tlm_fox();
     }
 
@@ -587,17 +613,22 @@ int main(int argc, char * argv[]) {
 
   if (mode == BPSK) {
     digitalWrite(txLed, txLedOn);
+
     #ifdef DEBUG_LOGGING
     printf("Tx LED On\n");
     #endif
+
     printf("Sleeping to allow BPSK transmission to finish.\n");
     sleep((unsigned int)(loop_count * 5));
     printf("Done sleeping\n");
     digitalWrite(txLed, txLedOff);
+
     #ifdef DEBUG_LOGGING
     printf("Tx LED Off\n");
     #endif
-  } else if (mode == FSK) {
+
+  } 
+  else if (mode == FSK) {
     printf("Sleeping to allow FSK transmission to finish.\n");
     sleep((unsigned int)loop_count);
     printf("Done sleeping\n");
@@ -654,6 +685,8 @@ void get_tlm(void) {
     #ifdef DEBUG_LOGGING
     printf("Tx LED On\n");
     #endif
+
+    // Creates tlm array and sets it all to 0
     int tlm[7][5];
     memset(tlm, 0, sizeof tlm);
 
@@ -663,6 +696,7 @@ void get_tlm(void) {
     char * token;
     char cmdbuffer[1000];
 
+    // Calls voltcurrent.py with I2C buses
     FILE * file = popen(pythonStr, "r");
     fgets(cmdbuffer, 1000, file);
     //   printf("result: %s\n", cmdbuffer);
@@ -676,20 +710,25 @@ void get_tlm(void) {
     memset(voltage, 0, sizeof(voltage));
     memset(current, 0, sizeof(current));
 
+    // Stores the voltage and current data read by the python script
     for (count1 = 0; count1 < 8; count1++) {
       if (token != NULL) {
         voltage[count1] = (float) atof(token);
+
         #ifdef DEBUG_LOGGING
         //		 printf("voltage: %f ", voltage[count1]);
         #endif
+
         token = strtok(NULL, space);
         if (token != NULL) {
           current[count1] = (float) atof(token);
           if ((current[count1] < 0) && (current[count1] > -0.5))
             current[count1] *= (-1);
+
           #ifdef DEBUG_LOGGING
           //		    printf("current: %f\n", current[count1]);
           #endif
+
           token = strtok(NULL, space);
         }
       }
