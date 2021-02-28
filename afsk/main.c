@@ -18,27 +18,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Helpful C libraries
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
+#include <math.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <errno.h>
+
+// Wiring Pi Library
+// #include <wiringSerial.h>
+// #include <wiringPiI2C.h>
+// #include <wiringPi.h>
+
+#include "../wiringPi/wiringSerial.h"
+#include "../wiringPi/wiringPiI2C.h"
+#include "../wiringPi/wiringPi.h"
+
+// Custom Files
 #include "status.h"
 #include "ax5043.h"
 #include "ax25.h"
 #include "spi/ax5043spi.h"
-#include <wiringPiI2C.h>
-#include <wiringPi.h>
-#include <wiringSerial.h>
-#include <time.h>
-#include <math.h>
 #include "TelemEncoding.h"
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <errno.h>
+
+
 
 #define PORT 8080
 
@@ -1689,6 +1698,10 @@ void get_tlm_fox() {
 
   return;
 }
+
+
+
+
  /*
  * TelemEncoding.h
  *
