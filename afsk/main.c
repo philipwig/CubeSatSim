@@ -32,13 +32,13 @@
 #include <errno.h>
 
 // Wiring Pi Library
-// #include <wiringSerial.h>
-// #include <wiringPiI2C.h>
-// #include <wiringPi.h>
+#include <wiringSerial.h>
+#include <wiringPiI2C.h>
+#include <wiringPi.h>
 
-#include "../wiringPi/wiringSerial.h"
-#include "../wiringPi/wiringPiI2C.h"
-#include "../wiringPi/wiringPi.h"
+// #include "../wiringPi/wiringSerial.h"
+// #include "../wiringPi/wiringPiI2C.h"
+// #include "../wiringPi/wiringPi.h"
 
 // Custom Files
 #include "status.h"

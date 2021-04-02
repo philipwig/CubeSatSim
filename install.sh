@@ -22,13 +22,13 @@ sudo pip3 install --upgrade setuptools
 sudo pip3 install adafruit-blinka RPI.GPIO adafruit-extended-bus adafruit-circuitpython-ina219
 
 
-cd ~/CubeSatSim
+cd ~/TEST/NewCubeSatSim/CubeSatSim
 
 git pull
 
 make debug
 
-FILE=/home/pi/CubeSatSim/.mode
+FILE=~/TEST/NewCubeSatSim/CubeSatSim/.mode
 if [ -f "$FILE" ]; then
     echo "$FILE exists."
 else 
@@ -36,7 +36,7 @@ else
     echo "ARG1=f" >> .mode
 fi
 
-FILE=/home/pi/CubeSatSim/sim.cfg
+FILE=~/TEST/NewCubeSatSim/CubeSatSim/sim.cfg
 if [ -f "$FILE" ]; then
     echo "$FILE exists."
 else 
@@ -74,11 +74,11 @@ cd rpitx
 
 cd
 
-sudo cp ~/CubeSatSim/systemd/cubesatsim.service /etc/systemd/system/cubesatsim.service
+sudo cp ~/TEST/NewCubeSatSim/CubeSatSim/systemd/cubesatsim.service /etc/systemd/system/cubesatsim.service
 
 sudo systemctl enable cubesatsim
 
-sudo cp ~/CubeSatSim/systemd/rpitx.service /etc/systemd/system/rpitx.service
+sudo cp ~/TEST/NewCubeSatSim/CubeSatSim/systemd/rpitx.service /etc/systemd/system/rpitx.service
 
 sudo systemctl enable rpitx
 
