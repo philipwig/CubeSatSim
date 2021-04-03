@@ -10,3 +10,7 @@ testafsktx
 doc/html/
 doc/latex/
 /.metadata/
+.vscode/
+sim.cfg
+t.txt
+telem.wav

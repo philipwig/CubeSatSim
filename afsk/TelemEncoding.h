@@ -8,6 +8,8 @@
 #ifndef TELEMENCODING_H_
 #define TELEMENCODING_H_
 
+#include "TelemEncoding.c"
+
 void update_rs(
    unsigned char parity[32], // 32-byte encoder state; zero before each frame
    unsigned char c          // Current data byte to update

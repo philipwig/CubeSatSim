@@ -1,19 +1,23 @@
 #!/bin/bash
 
-echo -e "\ninstallation script for CubeSatSim\n"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+echo -e "\ninstallation script for CubeSatSim"
+echo -e "Current directory ${DIR}\n"
+
+echo -e "Updating Raspberry Pi"
 sudo apt-get update && sudo apt-get dist-upgrade -y
 
 sudo apt-get install -y wiringpi git libasound2-dev i2c-tools cpulimit
 
-cd /tmp
+# cd /tmp
 
-wget https://project-downloads.drogon.net/wiringpi-latest.deb
+# wget https://project-downloads.drogon.net/wiringpi-latest.deb
 
-sudo dpkg -i wiringpi-latest.deb
+# sudo dpkg -i wiringpi-latest.deb
 
 
-cd
+cd ${DIR}
 
 sudo apt install -y python3-pip python-smbus
 
@@ -22,13 +26,13 @@ sudo pip3 install --upgrade setuptools
 sudo pip3 install adafruit-blinka RPI.GPIO adafruit-extended-bus adafruit-circuitpython-ina219
 
 
-cd ~/TEST/NewCubeSatSim/CubeSatSim
+cd ${DIR}
 
 git pull
 
 make debug
 
-FILE=~/TEST/NewCubeSatSim/CubeSatSim/.mode
+FILE= ${DIR}/.mode
 if [ -f "$FILE" ]; then
     echo "$FILE exists."
 else 
@@ -36,7 +40,7 @@ else
     echo "ARG1=f" >> .mode
 fi
 
-FILE=~/TEST/NewCubeSatSim/CubeSatSim/sim.cfg
+FILE= ${DIR}/sim.cfg
 if [ -f "$FILE" ]; then
     echo "$FILE exists."
 else 
@@ -44,7 +48,9 @@ else
     echo $1 >> sim.cfg
 fi
 
-cd
+cd ${DIR}
+
+echo -e "\nInstalling direwolf\n"
 
 git clone https://github.com/alanbjohnston/direwolf.git
 
@@ -56,7 +62,9 @@ sudo make install
 
 make install-rpi
 
-cd
+cd ${DIR}
+
+echo -e "\nInstalling pi-power-button\n"
 
 git clone https://github.com/alanbjohnston/pi-power-button.git
 
@@ -64,7 +72,9 @@ cd pi-power-button
 
 ./script/install
 
-cd
+cd ${DIR}
+
+echo -e "\nInstalling rpitx\n"
 
 git clone https://github.com/F5OEO/rpitx.git
 
@@ -72,7 +82,7 @@ cd rpitx
 
 ./install.sh
 
-cd
+cd ${DIR}
 
 sudo cp ~/TEST/NewCubeSatSim/CubeSatSim/systemd/cubesatsim.service /etc/systemd/system/cubesatsim.service
 
