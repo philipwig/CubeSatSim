@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra
 LIBS=-lwiringPi -lm
-OBJ=afsk/utils.o
+OBJ=afsk/utils.o afsk/drivers/ina219/ina219.o
 
 all: DEBUG_BEHAVIOR=
 all: radioafsk 
@@ -15,6 +15,8 @@ rebuild: all
 clean:
 	rm -f radioafsk
 	rm -f afsk/*.o
+	rm -f afsk/drivers/ina219/*.o
+	rm -f ina219Test
 
 
 # docs:
@@ -22,11 +24,15 @@ clean:
 # 	cd ax5043/doc/latex && make && cd ../.. && cp doc/latex/refman.pdf doc/TransceiverFramework.pdf
 
 afsk/utils.o: afsk/utils.c
+afsk/drivers/ina219/ina219.o: afsk/drivers/ina219/ina219.c
 	$(CC) $< -c -o $@ $(CFLAGS) $(LIBS)
+
+ina219Test: afsk/drivers/ina219/ina219Test.c afsk/drivers/ina219/ina219.o
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 # NEW radioafsk mainfile
 radioafsk: afsk/main.c $(OBJ)
-	$(CC)  -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 # TelemEncoding.o: afsk/TelemEncoding.h
 # 	gcc $< -c -o $@ $(CFLAGS)

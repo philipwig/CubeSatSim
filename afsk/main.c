@@ -29,32 +29,12 @@
 #include <errno.h>
 #include <limits.h>
 
-// #include <sys/socket.h>
-// #include <netinet/in.h>
-// #include <arpa/inet.h>
-
-
 // Wiring Pi Library
 #include <wiringSerial.h>
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
 
 #include "utils.h"
-
-// #include "../wiringPi/wiringSerial.h"
-// #include "../wiringPi/wiringPiI2C.h"
-// #include "../wiringPi/wiringPi.h"
-
-// Custom Files
-// #include "status.h"
-// #include "ax5043.h"
-// #include "ax25.h"
-// #include "spi/ax5043spi.h"
-// #include "TelemEncoding.h"
-
-
-
-#define PORT 8080
 
 #define A 1
 #define B 2
@@ -70,107 +50,40 @@
 #define PLUS_Z 6
 #define MINUS_Z 7
 
-#define TEMP 2
-#define PRES 3
-#define ALT 4
-#define HUMI 5
-#define GYRO_X 7
-#define GYRO_Y 8
-#define GYRO_Z 9
-#define ACCEL_X 10
-#define ACCEL_Y 11
-#define ACCEL_Z 12
-#define XS1 14
-#define XS2 15
-#define XS3 16
-
-#define RSSI 0
-#define IHU_TEMP 2
-#define SPIN 1
-
 #define OFF - 1
 #define ON 1
-
-// uint32_t tx_freq_hz = 434900000 + FREQUENCY_OFFSET;
-// uint32_t tx_freq_hz = 434900000;
-
-// uint8_t data[1024];
-// uint32_t tx_channel = 0;
-
-// ax5043_conf_t hax5043;
-// ax25_conf_t hax25;
-
-// int twosToInt(int val, int len);
-float rnd_float(double min, double max);
-void get_tlm();
-//void get_tlm_fox();
-// int encodeA(short int * b, int index, int val);
-// int encodeB(short int * b, int index, int val);
-
-// void config_x25();
-//void trans_x25();
-
-int upper_digit(int number);
-int lower_digit(int number);
-
-// static int init_rf();
-int socket_open = 0;
-int sock = 0;
-int loop = -1, loop_count = 0;
-int firstTime = ON;
-long start;
-int testCount = 0;
-
-short int buffer[2336400]; // max size for 10 frames count of BPSK
-
-#define S_RATE	(48000) // (44100)
 
 #define AFSK 1
 #define FSK 2
 #define BPSK 3
 #define CW 4
 
-int rpitxStatus = -1;
+void get_tlm();
 
-float amplitude; // = ; // 20000; // 32767/(10%amp+5%amp+100%amp)
-float freq_Hz = 3000; // 1200
+int upper_digit(int number);
+int lower_digit(int number);
 
-int smaller;
-int flip_ctr = 0;
-int phase = 1;
-int ctr = 0;
-int rd = 0;
-int nrd;
-void write_to_buffer(int i, int symbol, int val);
-void write_wave(int i, short int * buffer);
+int loop = -1, loop_count = 0;
+
 int uart_fd;
 
 int reset_count;
-float uptime_sec;
-long int uptime;
 char call[5];
 
-// int bitRate, mode, bufLen, rsFrames, payloads, rsFrameLen, dataLen, headerLen, syncBits, syncWord, parityLen, samples, frameCnt, samplePeriod;
 int mode, frameCnt;
-float sleepTime;
-int sampleTime = 0, frames_sent = 0;
+int frames_sent = 0;
 int cw_id = ON;
-int vB4 = FALSE, vB5 = FALSE, vB3 = FALSE, ax5043 = FALSE, transmit = TRUE, onLed, onLedOn, onLedOff, txLed, txLedOn, txLedOff, payload = OFF;
-float batteryThreshold = 3.0, batteryVoltage;
-float latitude = 39.027702f, longitude = -77.078064f;
-float lat_file, long_file;
 
-//float axis[3], angle[3], volts_max[3], amps_max[3], batt, speed, period, tempS, temp_max, temp_min, eclipse;
-//double eclipse_time;
-//long time_start;
+int vB4 = FALSE, vB5 = FALSE, vB3 = FALSE, ax5043 = FALSE, transmit = TRUE, onLed, onLedOn, onLedOff, txLed, txLedOn, txLedOff, payload = OFF;
+
+float batteryThreshold = 3.0, batteryVoltage;
+float latitude = 41.462399f, longitude = -87.038309f;
+float lat_file, long_file;
 
 int i2c_bus0 = OFF, i2c_bus1 = OFF, i2c_bus3 = OFF, camera = OFF, sim_mode = FALSE, rxAntennaDeployed = 0, txAntennaDeployed = 0;
 
-
 char pythonStr[100], pythonConfigStr[100], busStr[10];
 int map[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-char src_addr[5] = "";
-char dest_addr[5] = "CQ";
 float voltage_min[9], current_min[9], voltage_max[9], current_max[9], sensor_max[17], sensor_min[17], other_max[3], other_min[3];
 
 int main(int argc, char * argv[]) {
@@ -181,7 +94,6 @@ int main(int argc, char * argv[]) {
   if (argc > 1) {
 
     // Sets the transmit modulation type
-    //	  strcpy(src_addr, argv[1]);
     if ( * argv[1] == 'b') {
       mode = BPSK;
       printf("Mode BPSK\n");
@@ -424,11 +336,6 @@ int main(int argc, char * argv[]) {
 
 
   }
-
-  //int ret;
-  //uint8_t data[1024];
-
-  // tx_freq_hz -= tx_channel * 50000;
   
   // delay awaiting CW ID completion
   //if (mode == AFSK) sleep(10); 
@@ -447,7 +354,6 @@ int main(int argc, char * argv[]) {
   for (int i = 0; i < 17; i++) {
     sensor_min[i] = 1000.0;
     sensor_max[i] = -1000.0;
-    
   }
 
   printf("Sensor min and max initialized!");
@@ -485,7 +391,6 @@ int main(int argc, char * argv[]) {
     }
 
     //  sleep(1);  // Delay 1 second
-    ctr = 0;
     #ifdef DEBUG_LOGGING
     fprintf(stderr, "INFO: Getting TLM Data\n");
     #endif
@@ -495,8 +400,8 @@ int main(int argc, char * argv[]) {
       get_tlm();
     } 
     else { // FSK or BPSK
-      //get_tlm_fox();
-      printf("FSK or BPSK not enabled right now!");
+      printf("\nFSK or BPSK not enabled right now!");
+      break;   
     }
 
     #ifdef DEBUG_LOGGING
@@ -511,9 +416,9 @@ int main(int argc, char * argv[]) {
     printf("Tx LED On\n");
     #endif
 
-    printf("Sleeping to allow BPSK transmission to finish.\n");
+    printf("\nSleeping to allow BPSK transmission to finish.");
     sleep((unsigned int)(loop_count * 5));
-    printf("Done sleeping\n");
+    printf("\nDone sleeping");
     digitalWrite(txLed, txLedOff);
 
     #ifdef DEBUG_LOGGING
@@ -522,11 +427,12 @@ int main(int argc, char * argv[]) {
 
   } 
   else if (mode == FSK) {
-    printf("Sleeping to allow FSK transmission to finish.\n");
+    printf("\nSleeping to allow FSK transmission to finish.");
     sleep((unsigned int)loop_count);
-    printf("Done sleeping\n");
+    printf("\nDone sleeping");
   }
 
+  printf("\n");
   return 0;
 }
 
