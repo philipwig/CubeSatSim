@@ -9,6 +9,9 @@
 #include <string.h>
 #include <math.h>
 
+#include <ctype.h>
+#include <errno.h>
+
 #include <wiringSerial.h>
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
@@ -50,10 +53,15 @@
 #define OFF - 1
 #define ON 1
 
-float rnd_float(double min, double max) {   // returns 2 decimal point random number
+#define AFSK 1
+#define FSK 2
+#define BPSK 3
+#define CW 4
+
+double rnd_float(double min, double max) {   // returns 2 decimal point random number
 	
 	int val = (rand() % ((int)(max*100) - (int)(min*100) + 1)) + (int)(min*100);
-	float ret = ((float)(val)/100);
+	double ret = ((double)(val)/100);
 	
       return(ret);
 }
@@ -96,7 +104,7 @@ int test_i2c_bus(int bus) {
 	return(output);	// return bus number or -1 if there is a problem with the bus
 }
 
-void gen_tlm(float *current, float *voltage, int *map) {
+void gen_sim_telemetry(double *current, double *voltage, int *map) {
     static float axis[3], angle[3], volts_max[3], amps_max[3], batt = 0, speed = 0, period = 0, tempS = 0, temp_max = 0, temp_min = 0, eclipse = 0;
     static float Xi = 0, Yi = 0, Zi = 0, Xv = 0, Yv = 0, Zv = 0;
     static double eclipse_time = 0, time = 0;
@@ -176,6 +184,7 @@ void gen_tlm(float *current, float *voltage, int *map) {
     current[map[MINUS_Y]] = (Yi >= 0) ? 0 : ((-1.0f) * Yi);
     current[map[PLUS_Z]] = (Zi >= 0) ? Zi : 0;
     current[map[MINUS_Z]] = (Zi >= 0) ? 0 : ((-1.0f) * Zi);
+
     voltage[map[PLUS_X]] = (Xv >= 1) ? Xv : rnd_float(0.9, 1.1);
     voltage[map[MINUS_X]] = (Xv <= -1) ? ((-1.0f) * Xv) : rnd_float(0.9, 1.1);
     voltage[map[PLUS_Y]] = (Yv >= 1) ? Yv : rnd_float(0.9, 1.1);
@@ -220,5 +229,167 @@ void gen_tlm(float *current, float *voltage, int *map) {
     // end of simulated telemetry	
 
 }
+
+
+
+static void strip_str(char *data) {
+    unsigned long i = 0; /* Scanning index */
+    unsigned long x = 0; /* Write back index */
+    char c;
+
+    // Until the end of the string, check if character is either alphabetic or numeric and add it to the string
+    while ((c = data[i++]) != '\0') {
+        
+        if (isalnum(c)) data[x++] = c;
+    }
+    // Terminate the string with a \0
+    data[x] = '\0';
+}
+
+void read_config_file(char *file_path, int mode, char *callsign, char *latlong_str, int *num_resets) {
+    double latitude, longitude;
+    char str_latitude[10];
+    char str_longitude[10];
+
+    printf("File path: %s", file_path);
+
+    FILE *config_file = fopen(file_path, "r");
+
+    // If there is no config file, create a blank one and open it
+    if (config_file == NULL) {
+        printf("Creating config file.");
+        config_file = fopen(file_path, "w");
+    
+        fprintf(config_file, "%s %d", " ", 100);
+
+        fclose(config_file);
+
+        // config_file = fopen(filePath, "r");  
+        // // Writes callsign, reset count, latitude and longitude to the sim.cfg file
+        // config_file = fopen("sim.cfg", "w");
+        // fprintf(config_file, "%s %d %8.4f %8.4f", callsign, reset_count, lat_file, long_file);
+        // //    fprintf(config_file, "%s %d", callsign, reset_count);
+
+    }
+    else {
+        // Read in the callsign, reset count, latitude and longitude from the config file
+        //char *cfg_buf[100];
+
+        #define MAX_LINE_LENGTH 1000
+        char line[MAX_LINE_LENGTH];
+
+        char *setting, *value;
+
+        while(fgets(line, MAX_LINE_LENGTH, config_file) != NULL) {
+                // Ignore any lines starting with a # (for comments)
+                if(line[0] == '#') continue;
+                
+                setting = strtok(line, "=");
+                value = strtok(NULL, "=");
+
+                // Store the config information as it is read
+                if(strcmp(setting, "callsign") == 0) {
+                    strcpy(callsign, value);
+                    strip_str(callsign);
+                }
+                if(strcmp(setting, "num_resets") == 0) *num_resets = atoi(value);
+                if(strcmp(setting, "latitude") == 0) latitude = atof(value);
+                if(strcmp(setting, "longitude") == 0) longitude = atof(value);
+        }
+        
+        // Close the config file as we are done with it
+        fclose(config_file);
+
+        // Print the contents read from the config file
+        printf("\nConfig file %s contains %s %d %f %f\n", file_path, callsign, *num_resets, latitude, longitude);
+
+        // Starts the command string using the values in the config file
+        if (mode != CW) {
+            // Check for valid latitude and if it is valid, add it to the command string
+            if (latitude < 90 && latitude > 0) sprintf(str_latitude, "%07.2f%c", latitude * 100.0, 'N');
+            else if (latitude > -90) sprintf(str_latitude, "%07.2f%c", latitude * (-100.0), 'S');
+
+            // Check for valid longitude and if it is valid, add it to the command string
+            if (longitude < 180 && longitude > 0) sprintf(str_longitude, "%08.2f%c", longitude * 100.0, 'E');
+            else if (longitude > -180) sprintf(str_longitude, "%08.2f%c", longitude * (-100.0), 'W');
+
+            // Add formatted latitude and longitude to the output string
+            strcpy(latlong_str, "");
+            
+            strcat(latlong_str, str_latitude);
+            strcat(latlong_str, "\\\\");
+            strcat(latlong_str, str_longitude);
+
+            // printf("\n%s", latlong_str);
+        }
+        // reset_count = (reset_count + 1) % 0xffff;
+    } 
+}
+
+
+void payload_init(int *uart_fd, int *payload) {
+    printf("\nTrying to connect to Ardunio payload\n");
+    *payload = OFF;
+
+    if ((*uart_fd = serialOpen("/dev/ttyAMA0", 9600)) >= 0) {
+      char c;
+      int charss = (char) serialDataAvail(*uart_fd);
+      if (charss != 0) printf("Clearing buffer of %d chars \n", charss);
+      while ((charss--> 0)) c = (char) serialGetchar(*uart_fd); // clear buffer
+
+      unsigned int waitTime;
+
+      for (int i = 0; i < 2; i++) {
+        serialPutchar(*uart_fd, 'R');
+        printf("Querying payload with R to reset\n");
+        waitTime = millis() + 500;
+
+        while ((millis() < waitTime) && (*payload != ON)) {
+          if (serialDataAvail(*uart_fd)) {
+            printf("%c", c = (char) serialGetchar(*uart_fd));
+            fflush(stdout);
+            
+            if (c == 'O') {
+              printf("%c", c = (char) serialGetchar(*uart_fd));
+              fflush(stdout);
+
+              if (c == 'K') *payload = ON;
+            }
+          }
+          //        sleep(0.75);
+        }
+      }
+      if (*payload == ON)
+        printf("\nPayload is present!\n");
+      else
+        printf("\nPayload not present!\n");
+    } 
+    else {
+      fprintf(stderr, "Unable to open UART: %s\n", strerror(errno));
+    }
+}
+
+
+double get_cpu_temp() {
+    double cpu_temp;
+
+    FILE * cpuTempSensor = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+
+    if (cpuTempSensor) {
+      fscanf(cpuTempSensor, "%lf", & cpu_temp);
+      cpu_temp /= 1000;
+
+      #ifdef DEBUG_LOGGING
+      printf("CPU Temp Read: %6.1f\n", cpu_temp);
+      #endif
+
+    }
+
+    fclose(cpuTempSensor);
+
+    return cpu_temp;
+}
+
+
 
 #endif

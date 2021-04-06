@@ -34,5 +34,9 @@ ina219Test: afsk/drivers/ina219/ina219Test.c afsk/drivers/ina219/ina219.o
 radioafsk: afsk/main.c $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
+test: test.c
+	$(CC) -o $@ $^ $(CFLAGS)
+
+
 # TelemEncoding.o: afsk/TelemEncoding.h
 # 	gcc $< -c -o $@ $(CFLAGS)
