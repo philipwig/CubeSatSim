@@ -10,7 +10,14 @@ testafsktx
 doc/html/
 doc/latex/
 /.metadata/
+
 .vscode/
+direwolf/
+pi-power-button/
+radioafsk
+rpitx/
 sim.cfg
 t.txt
 telem.wav
+morse.wav
+wpa_supplicant.conf

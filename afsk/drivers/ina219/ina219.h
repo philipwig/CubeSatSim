@@ -9,6 +9,12 @@
  * 
  */
 
+/*
+    TODO:
+    Need to add errors for when the devices are not able to be accessed.
+
+*/
+
 #ifndef INA219_H
 #define INS219_H
 
@@ -77,6 +83,7 @@
  */
 struct ina219 {
     // User configurable
+    const char *device; // The i2c bus ("/dev/i2c-x") the device is connected to
     int devId; // The ID of the ina219 current sensor
     double maxInputCurrent; // The max expected input current to measure
     double Rshunt; // The value of the shunt resistor
@@ -88,7 +95,7 @@ struct ina219 {
     uint16_t config; // The value of the configuration register on the ina219
 };
 
-int      ina219Init(struct ina219 *sensor);
+void     ina219Init(struct ina219 *sensor);
 void     ina219SetConfiguration_All(struct ina219 *sensor, uint16_t RST, uint16_t BRNG, uint16_t PG, uint16_t BADC, uint16_t SADC, uint16_t MODE);
 void     ina219SetConfiguration_Selection(struct ina219 *sensor, uint16_t MASK, uint16_t CONFIG);
 

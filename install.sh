@@ -84,11 +84,11 @@ cd rpitx
 
 cd ${DIR}
 
-sudo cp ~/TEST/NewCubeSatSim/CubeSatSim/systemd/cubesatsim.service /etc/systemd/system/cubesatsim.service
+sudo cp ${DIR}/systemd/cubesatsim.service /etc/systemd/system/cubesatsim.service
 
 sudo systemctl enable cubesatsim
 
-sudo cp ~/TEST/NewCubeSatSim/CubeSatSim/systemd/rpitx.service /etc/systemd/system/rpitx.service
+sudo cp ${DIR}/systemd/rpitx.service /etc/systemd/system/rpitx.service
 
 sudo systemctl enable rpitx
 
@@ -106,6 +106,7 @@ sudo raspi-config nonint do_i2c 0
   
   sudo sed -i 's/#dtparam=i2c_arm=on/dtparam=i2c_arm=on/g' /boot/config.txt
   
+  # Adding i2c bus 3 to raspbery pi on gpio pints 23 and 24
   if [[ $(grep 'dtoverlay=i2c-gpio,bus=3,i2c_gpio_delay_us=1,i2c_gpio_sda=23,i2c_gpio_scl=24' /boot/config.txt) ]]; then
     echo "dtoverlay=i2c-gpio already in /boot/config.txt"
   else
@@ -113,6 +114,7 @@ sudo raspi-config nonint do_i2c 0
     sudo sh -c 'echo "\ndtoverlay=i2c-gpio,bus=3,i2c_gpio_delay_us=1,i2c_gpio_sda=23,i2c_gpio_scl=24" >> /boot/config.txt'
   fi
 
+  # Enables uart on the pi
   if [[ $(grep 'dtoverlay=pi3-miniuart-bt' /boot/config.txt) ]]; then
     echo "dtoverlay=pi3-miniuart-bt already in /boot/config.txt"
   else
@@ -120,6 +122,7 @@ sudo raspi-config nonint do_i2c 0
     sudo sh -c 'echo "\ndtoverlay=pi3-miniuart-bt" >> /boot/config.txt'
   fi
   
+  # Enable dwc2 driver over dwc_otg for support with ardunio serial communication
   if [[ $(grep 'dtoverlay=dwc2' /boot/config.txt) ]]; then
     echo "dtoverlay=dwc2 aalready in /boot/config.txt"
   else

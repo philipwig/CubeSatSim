@@ -17,7 +17,7 @@
 
 
 /**
- * @brief Initilizes the specified ina219 sensor. Need to specify devId, maxInputCurrent, and Rshunt in the ina219 struct before using.
+ * @brief Initilizes the specified ina219 sensor. Need to specify the i2c bus ("/dev/i2c-x"), devId, maxInputCurrent, and Rshunt in the ina219 struct before using.
  *        Everything else will get overwritten when ina219Init() is called. Defaults to a bus voltage range of 16V, 12 bit ADC resolution 
  *        for the bus and shunt voltage, and continuous shunt and bus measurement mode. This configuration can be changed with 
  *        ina219SetConfiguration_All() or ina219SetConfiguration_Select()
@@ -25,9 +25,9 @@
  * @param sensor The ina219 sensor to use
  * @return int Returns 1 if the function there is an error, 0 for success
  */
-int ina219Init(struct ina219 *sensor) {
+void ina219Init(struct ina219 *sensor) {
     // Initializes the device with wiringpi
-    sensor->fd = wiringPiI2CSetup(sensor->devId);
+    sensor->fd = wiringPiI2CSetupInterface(sensor->device, sensor->devId);
 
     // Reset INA219 (set to default values)
     ina219WriteRegister16(sensor, INA219_REG_CONFIG, INA219_CONFIG_RESET);
@@ -38,7 +38,7 @@ int ina219Init(struct ina219 *sensor) {
     // Convert the calculated calibration value to a 16 bit value. If the calculated calibration is higher than possible it stays at the max 16 bit value
     uint16_t calibration16bit;
     if (calibration < 65535) calibration16bit = (uint16_t) calibration;
-    else return 1;  // ERROR: Calculated calibration value overflows 16 bit int. Check maxInputCurrent and Rshunt values
+    // else return 1;  // ERROR: Calculated calibration value overflows 16 bit int. Check maxInputCurrent and Rshunt values
 
     // Set Calibration register to the calibration calculated above	
     ina219WriteRegister16(sensor, INA219_REG_CALIBRATION, calibration16bit);
@@ -59,7 +59,7 @@ int ina219Init(struct ina219 *sensor) {
     else if (maxVshunt < 0.08) PGAGain = INA219_CONFIG_GAIN_2_80MV;
     else if (maxVshunt < 0.16) PGAGain = INA219_CONFIG_GAIN_4_160MV;
     else if (maxVshunt < 0.32) PGAGain = INA219_CONFIG_GAIN_8_320MV;
-    else return 1;  //ERROR: Could not calculate suitable PGAGain. Check maxInputCurrent and Rshunt values
+    // else return 1;  //ERROR: Could not calculate suitable PGAGain. Check maxInputCurrent and Rshunt values
 
     // Set Config register to take using the PGA gain from above and some defaults
     sensor->config  =   INA219_CONFIG_BVOLTAGERANGE_16V |
@@ -69,8 +69,6 @@ int ina219Init(struct ina219 *sensor) {
                         INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS;
 
     ina219WriteRegister16(sensor, INA219_REG_CONFIG, sensor->config);
-
-    return 0;
 }
 
 

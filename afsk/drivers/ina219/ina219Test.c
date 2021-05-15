@@ -19,12 +19,14 @@ void printBits(size_t const size, void const * const ptr)
 
 int main() {
     struct ina219 sensor1;
+    sensor1.device = "/dev/i2c-3";
     sensor1.devId = 0x40;
     sensor1.Rshunt = 0.1;
     sensor1.maxInputCurrent = 0.5;
 
     struct ina219 sensor2;
-    sensor2.devId = 0x41;
+    sensor2.device = "/dev/i2c-1";
+    sensor2.devId = 0x46;
     sensor2.Rshunt = 0.1;
     sensor2.maxInputCurrent = 0.5;
 

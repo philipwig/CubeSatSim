@@ -16,92 +16,50 @@
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
 
-#define PORT 8080
-
-#define A 1
-#define B 2
-#define C 3
-#define D 4
-
-#define PLUS_X 0
-#define PLUS_Y 1
-#define BAT 2
-#define BUS 3
-#define MINUS_X 4
-#define MINUS_Y 5
-#define PLUS_Z 6
-#define MINUS_Z 7
-
-#define TEMP 2
-#define PRES 3
-#define ALT 4
-#define HUMI 5
-#define GYRO_X 7
-#define GYRO_Y 8
-#define GYRO_Z 9
-#define ACCEL_X 10
-#define ACCEL_Y 11
-#define ACCEL_Z 12
-#define XS1 14
-#define XS2 15
-#define XS3 16
-
-#define RSSI 0
-#define IHU_TEMP 2
-#define SPIN 1
-
-#define OFF - 1
-#define ON 1
-
-#define AFSK 1
-#define FSK 2
-#define BPSK 3
-#define CW 4
+#include "constants.h"
 
 double rnd_float(double min, double max) {   // returns 2 decimal point random number
-	
-	int val = (rand() % ((int)(max*100) - (int)(min*100) + 1)) + (int)(min*100);
-	double ret = ((double)(val)/100);
-	
-      return(ret);
+    int val = (rand() % ((int)(max*100) - (int)(min*100) + 1)) + (int)(min*100);
+    double ret = ((double)(val)/100);
+  
+    return(ret);
 }
 
 int test_i2c_bus(int bus) {
-	int output = bus; // return bus number if OK, otherwise return -1
-	char busDev[20] = "/dev/i2c-";
-	char busS[5];
-	snprintf(busS, 5, "%d", bus);  
-	strcat (busDev, busS);	
-	printf("I2C Bus Tested: %s \n", busDev);
-	
-	if (access(busDev, W_OK | R_OK) >= 0)  {   // Test if I2C Bus is present			
-//	  	printf("bus is present\n\n");	    
-    	  	char result[128];		
-    	  	const char command_start[] = "timeout 10 i2cdetect -y ";
-		char command[50];
-		strcpy (command, command_start);
-    	 	strcat (command, busS);
-//     	 	printf("Command: %s \n", command);
-    	 	FILE *i2cdetect = popen(command, "r");
-	
-    	 	while (fgets(result, 128, i2cdetect) != NULL) {
-    	 		//;
-//       	 	printf("result: %s", result);
-    	 	}	
-    	 	int error = pclose(i2cdetect)/256;
-//      	 	printf("%s error: %d \n", &command, error);
-    	 	if (error != 0) 
-    	 	{	
-    	 		printf("ERROR: %sd bus has a problem \n  Check I2C wiring and pullup resistors \n", busDev);
-			output = -1;
-    		}													
-	} 
+    int output = bus; // return bus number if OK, otherwise return -1
+    char busDev[20] = "/dev/i2c-";
+    char busS[5];
+    snprintf(busS, 5, "%d", bus);
+    strcat (busDev, busS);
+    printf("I2C Bus Tested: %s \n", busDev);
+  
+    if (access(busDev, W_OK | R_OK) >= 0)  {   // Test if I2C Bus is present
+        // printf("bus is present\n\n");
+        char result[128];
+        const char command_start[] = "timeout 10 i2cdetect -y ";
+        char command[50];
+        strcpy (command, command_start);
+        strcat (command, busS);
+        // printf("Command: %s \n", command);
+        FILE *i2cdetect = popen(command, "r");
+  
+        while (fgets(result, 128, i2cdetect) != NULL) {
+        //    ;
+            // printf("result: %s", result);
+        }
+        int error = pclose(i2cdetect)/256;
+        // printf("%s error: %d \n", &command, error);
+        if (error != 0) {	
+            printf("ERROR: %sd bus has a problem \n  Check I2C wiring and pullup resistors \n", busDev);
+            output = -1;
+        }
+    }
     else {
-    	printf("ERROR: %s bus has a problem \n  Check software to see if I2C enabled \n", busDev);
-		output = -1; 
-	}
+        printf("ERROR: %s bus has a problem \n  Check software to see if I2C enabled \n", busDev);
+        output = -1;
+    }
 
-	return(output);	// return bus number or -1 if there is a problem with the bus
+    return(output);	// return bus number or -1 if there is a problem with the bus
 }
 
 void gen_sim_telemetry(double *current, double *voltage, int *map) {
