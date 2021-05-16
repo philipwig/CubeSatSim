@@ -14,5 +14,8 @@ void gen_sim_telemetry(double *current, double *voltage, int *map);
 void read_config_file(char *file_path, int mode, char *callsign, char *latlong_str, int *num_resets);
 void payload_init(int *uart_fd, int *payload);
 double get_cpu_temp();
+int lower_digit(int number);
+int upper_digit(int number);
+
 
 #endif
